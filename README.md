@@ -1,16 +1,4 @@
-# Fresh project
+# Deno Fresh + Supabase Auth
 
-Your new Fresh project is ready to go. You can follow the Fresh "Getting
-Started" guide here: https://fresh.deno.dev/docs/getting-started
-
-### Usage
-
-Make sure to install Deno: https://deno.land/manual/getting_started/installation
-
-Then start the project:
-
-```
-deno task start
-```
-
-This will watch the project directory and restart as necessary.
+This is an example repo of setting up Supabase SSR auth with Deno fresh.
+I wrote a few more words about this [here](https://www.npbee.me/posts/fresh-supabase-auth).

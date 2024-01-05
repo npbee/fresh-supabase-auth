@@ -91,12 +91,12 @@ export function createSupabaseClient(req: Request, resp: Response) {
         },
         set(key, value, options) {
           const cookie = serialize(key, value, options);
-          // If the cookie is updated, update the cookies for the request and response
+          // If the cookie is updated, update the cookies for the response
           resp.headers.append("Set-Cookie", cookie);
         },
         remove(key, options) {
           const cookie = serialize(key, "", options);
-          // If the cookie is removed, update the cookies for the request and response
+          // If the cookie is removed, update the cookies for the response
           resp.headers.append("Set-Cookie", cookie);
         },
       },
