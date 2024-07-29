@@ -55,7 +55,10 @@ async function setSessionState(req: Request, ctx: FreshContext) {
   const nextResp = await ctx.next();
 
   // Copy over any headers that were added by Supabase
-  for (const [key, value] of resp.headers) {
+  // Note how we're spreading the headers before iterating. This ensures we're
+  // capturing potentially duplicated headers that Supabase might add, like
+  // chunked cookies.
+  for (const [key, value] of [...resp.headers]) {
     nextResp.headers.set(key, value);
   }
 
