@@ -1,6 +1,10 @@
 import type { FreshContext, Plugin } from "$fresh/server.ts";
 import { assert } from "$std/assert/assert.ts";
-import { createServerClient, parse, serialize } from "@supabase/ssr";
+import {
+  createServerClient,
+  parseCookieHeader,
+  serializeCookieHeader,
+} from "@supabase/ssr";
 import { Session } from "@supabase/supabase-js";
 import { redirect } from "../utils.ts";
 
@@ -59,7 +63,7 @@ async function setSessionState(req: Request, ctx: FreshContext) {
   // capturing potentially duplicated headers that Supabase might add, like
   // chunked cookies.
   for (const [key, value] of [...resp.headers]) {
-    nextResp.headers.set(key, value);
+    nextResp.headers.append(key, value);
   }
 
   return nextResp;
@@ -76,35 +80,27 @@ function ensureSignedIn(_req: Request, ctx: FreshContext) {
 }
 
 export function createSupabaseClient(req: Request, resp: Response) {
-  const cookies = parse(req.headers.get("Cookie") || "");
-
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
 
   assert(SUPABASE_URL, "SUPABASE_URL is not set");
   assert(ANON_KEY, "SUPABASE_ANON_KEY is not set");
 
-  const supabase = createServerClient(
-    SUPABASE_URL,
-    ANON_KEY,
-    {
-      cookies: {
-        get(key) {
-          return cookies[key];
-        },
-        set(key, value, options) {
-          const cookie = serialize(key, value, options);
+  const supabase = createServerClient(SUPABASE_URL, ANON_KEY, {
+    cookies: {
+      getAll() {
+        return parseCookieHeader(req.headers.get("Cookie") || "");
+      },
+
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value, options }) => {
+          const cookie = serializeCookieHeader(key, value, options);
           // If the cookie is updated, update the cookies for the response
           resp.headers.append("Set-Cookie", cookie);
-        },
-        remove(key, options) {
-          const cookie = serialize(key, "", options);
-          // If the cookie is removed, update the cookies for the response
-          resp.headers.append("Set-Cookie", cookie);
-        },
+        });
       },
     },
-  );
+  });
 
   return supabase;
 }
