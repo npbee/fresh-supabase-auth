@@ -5,15 +5,17 @@ import {
   parseCookieHeader,
   serializeCookieHeader,
 } from "@supabase/ssr";
-import { Session } from "@supabase/supabase-js";
+import { Session, User } from "@supabase/supabase-js";
 import { redirect } from "../utils.ts";
 
 export type SignedInState = {
   session: Session;
+  user: User;
 };
 
 export type SignedOutState = {
   session?: null;
+  user?: null;
 };
 
 export type AuthState = SignedInState | SignedOutState;
@@ -55,6 +57,20 @@ async function setSessionState(req: Request, ctx: FreshContext) {
 
   ctx.state.session = data.session;
 
+  /**
+   * Unlike `supabase.auth.getSession()`, which returns the session _without_
+   * validating the JWT, this function also calls `getUser()` to validate the
+   * JWT before setting the session.
+   */
+  const { error, data: { user } } = await supabase.auth.getUser();
+  if (error) {
+    // JWT validation has failed
+    ctx.state.session = null;
+    ctx.state.user = null;
+  }
+
+  ctx.state.user = user;
+
   // Continue down the middleware chain
   const nextResp = await ctx.next();
 
@@ -94,7 +110,7 @@ export function createSupabaseClient(req: Request, resp: Response) {
 
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          const cookie = serializeCookieHeader(key, value, options);
+          const cookie = serializeCookieHeader(name, value, options);
           // If the cookie is updated, update the cookies for the response
           resp.headers.append("Set-Cookie", cookie);
         });
