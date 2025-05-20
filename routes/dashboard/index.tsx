@@ -7,8 +7,7 @@ export default async function DashboardPage(
   _req: Request,
   ctx: FreshContext<SignedInState>,
 ) {
-  const { session } = ctx.state;
-  const { user } = session;
+  const { user } = ctx.state;
   return (
     <Container>
       <h1 class="text-xl">Dashboard</h1>
